@@ -6,7 +6,7 @@ authors = ["Alexandre van Beurden"]
 repository = "https://github.com/alexvbrdn/regex-charclass"
 license = "MIT"
 keywords = [
-    "character classes",
+    "regex",
     "intersection",
     "union",
     "difference",
