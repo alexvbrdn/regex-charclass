@@ -8,14 +8,14 @@ use irange::integer::Bounded;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-pub(crate) static INVALID_MIN: u32 = 0xD800;
-pub(crate) static INVALID_MAX: u32 = 0xDFFF;
-pub(crate) static INVALID_SIZE: u32 = 0x800;
+pub(super) static INVALID_MIN: u32 = 0xD800;
+pub(super) static INVALID_MAX: u32 = 0xDFFF;
+pub(super) static INVALID_SIZE: u32 = 0x800;
 
 /// A structure holding a `char` to use within a `RangeSet`.
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Char(pub(crate) char);
+pub struct Char(char);
 
 impl Char {
     /// Create a new instance from the given `char`.
@@ -27,6 +27,7 @@ impl Char {
     ///  
     /// let c = Char::new('a');
     /// ```
+    #[inline]
     pub fn new(c: char) -> Self {
         Char(c)
     }
@@ -41,6 +42,7 @@ impl Char {
     /// let c = Char::new('a');
     /// assert_eq!('a', c.to_char());
     /// ```
+    #[inline]
     pub fn to_char(&self) -> char {
         self.0
     }
@@ -54,6 +56,7 @@ impl Char {
     ///  
     /// let c = Char::from_u32(97);
     /// ```
+    #[inline]
     pub fn from_u32(c: u32) -> Option<Self> {
         Some(Char(char::from_u32(c)?))
     }
@@ -68,6 +71,7 @@ impl Char {
     /// let c = Char::new('a');
     /// assert_eq!(97, c.to_u32());
     /// ```
+    #[inline]
     pub fn to_u32(&self) -> u32 {
         self.0 as u32
     }

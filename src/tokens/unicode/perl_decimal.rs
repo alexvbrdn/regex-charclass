@@ -6,10 +6,6 @@
 //
 // ucd-generate 0.3.0 is available on crates.io.
 
-pub const BY_NAME: &'static [(&'static str, &'static [(char, char)])] = &[
-  ("Decimal_Number", DECIMAL_NUMBER),
-];
-
 pub const DECIMAL_NUMBER: &'static [(char, char)] = &[
   ('0', '9'), ('٠', '٩'), ('۰', '۹'), ('߀', '߉'), ('०', '९'),
   ('০', '৯'), ('੦', '੯'), ('૦', '૯'), ('୦', '୯'),

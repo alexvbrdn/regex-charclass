@@ -1,5 +1,5 @@
 pub mod char;
-pub mod tokens;
+mod tokens;
 use std::ops::{Bound, RangeBounds};
 
 use char::{Char, INVALID_MIN, INVALID_SIZE};
@@ -55,6 +55,7 @@ impl CharacterClass for RangeSet<Char> {
     ///  
     /// let range = RangeSet::new_from_range_u32(97..=122);
     /// ```
+    #[inline]
     fn new_from_range_u32<R: RangeBounds<u32>>(range: R) -> Option<Self> {
         let min = to_lowerbound_u32(range.start_bound())?;
         let max = to_upperbound_u32(range.end_bound())?;
@@ -71,6 +72,7 @@ impl CharacterClass for RangeSet<Char> {
     ///  
     /// let range = RangeSet::new_from_range_char('a'..='z');
     /// ```
+    #[inline]
     fn new_from_range_char<R: RangeBounds<char>>(range: R) -> Self {
         let min = to_lowerbound_char(range.start_bound());
         let max = to_upperbound_char(range.end_bound());
@@ -88,6 +90,7 @@ impl CharacterClass for RangeSet<Char> {
     /// let range = RangeSet::new_from_range_char('a'..='z');
     /// assert_eq!(26, range.get_cardinality());
     /// ```
+    #[inline]
     fn get_cardinality(&self) -> u32 {
         let mut cardinality = 0;
         for r in (0..self.0.len()).step_by(2) {
@@ -121,6 +124,7 @@ impl CharacterClass for RangeSet<Char> {
     /// ]);
     /// assert_eq!("\\p{ASCII_Hex_Digit}", range.to_regex());
     /// ```
+    #[inline]
     fn to_regex(&self) -> String {
         let range = self.clone();
         if self.is_empty() {
