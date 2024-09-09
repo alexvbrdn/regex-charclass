@@ -1,6 +1,6 @@
 [package]
 name = "regex-charclass"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["Alexandre van Beurden"]
 repository = "https://github.com/alexvbrdn/regex-charclass"
@@ -27,7 +27,6 @@ rand = "0.8"
 serde_json = "1.0"
 
 [features]
-default = ["serde"]
 serde = ["irange/serde", "dep:serde"]
 
 [[bench]]
