@@ -1,6 +1,6 @@
 [package]
 name = "regex-charclass"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 authors = ["Alexandre van Beurden"]
 repository = "https://github.com/alexvbrdn/regex-charclass"
