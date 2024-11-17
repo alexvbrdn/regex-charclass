@@ -44,5 +44,5 @@ assert_eq!("\\P{ASCII_Hex_Digit}", range2_complement.to_regex());
 assert_eq!(".", range2.union(&range2_complement).to_regex());
 assert_eq!("[]", range2.intersection(&range2_complement).to_regex());
 
-assert_eq!("[g-z]", range1.difference(&range1).to_regex());
+assert_eq!("[g-z]", range1.difference(&range2).to_regex());
 ```
