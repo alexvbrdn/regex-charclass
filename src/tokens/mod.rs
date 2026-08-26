@@ -1,33 +1,80 @@
 use irange::RangeSet;
-use once_cell::sync::Lazy;
-use unicode::{general_category, perl_decimal, perl_space, perl_word, property_bool, script};
+use unicode::{general_category, perl_word, property_bool, script};
 
 use crate::{Char, CharacterClass};
 
 mod unicode;
 
-type ClassesCollection = Vec<(usize, &'static [(char, char)], &'static str)>;
+type ClassEntry = (usize, &'static [(char, char)], &'static str);
+type NamedClasses = &'static [(&'static str, &'static [(char, char)])];
 
-static CLASSES_COLLECTION: Lazy<ClassesCollection> = Lazy::new(|| {
-    let mut collection = Vec::with_capacity(
-        general_category::BY_NAME.len() + property_bool::BY_NAME.len() + script::BY_NAME.len(),
-    );
+const CLASSES_COLLECTION_LEN: usize =
+    general_category::BY_NAME.len() + property_bool::BY_NAME.len() + script::BY_NAME.len();
 
-    for (name, value) in general_category::BY_NAME {
-        collection.push((value.len(), *value, *name));
+/// Every named class, sorted by range count then by ranges so that
+/// [`find_class`] can binary search it. Built at compile time.
+static CLASSES_COLLECTION: [ClassEntry; CLASSES_COLLECTION_LEN] = build_classes_collection();
+
+const fn build_classes_collection() -> [ClassEntry; CLASSES_COLLECTION_LEN] {
+    let mut collection: [ClassEntry; CLASSES_COLLECTION_LEN] =
+        [(0, &[], ""); CLASSES_COLLECTION_LEN];
+    let mut index = 0;
+
+    let tables: [NamedClasses; 3] = [
+        general_category::BY_NAME,
+        property_bool::BY_NAME,
+        script::BY_NAME,
+    ];
+
+    let mut table = 0;
+    while table < tables.len() {
+        let mut i = 0;
+        while i < tables[table].len() {
+            let (name, value) = tables[table][i];
+            collection[index] = (value.len(), value, name);
+            index += 1;
+            i += 1;
+        }
+        table += 1;
     }
 
-    for (name, value) in property_bool::BY_NAME {
-        collection.push((value.len(), *value, *name));
+    // Insertion sort: `sort_unstable_by` is not available in a const context.
+    let mut i = 1;
+    while i < CLASSES_COLLECTION_LEN {
+        let mut j = i;
+        while j > 0 && is_before(collection[j], collection[j - 1]) {
+            let swap = collection[j - 1];
+            collection[j - 1] = collection[j];
+            collection[j] = swap;
+            j -= 1;
+        }
+        i += 1;
     }
 
-    for (name, value) in script::BY_NAME {
-        collection.push((value.len(), *value, *name));
-    }
-
-    collection.sort_unstable_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(b.1)));
     collection
-});
+}
+
+/// `a < b` for the ordering [`find_class`] binary searches with.
+const fn is_before(a: ClassEntry, b: ClassEntry) -> bool {
+    if a.0 != b.0 {
+        return a.0 < b.0;
+    }
+
+    let mut i = 0;
+    while i < a.1.len() && i < b.1.len() {
+        let (a_start, a_end) = a.1[i];
+        let (b_start, b_end) = b.1[i];
+        if a_start as u32 != b_start as u32 {
+            return (a_start as u32) < (b_start as u32);
+        }
+        if a_end as u32 != b_end as u32 {
+            return (a_end as u32) < (b_end as u32);
+        }
+        i += 1;
+    }
+
+    a.1.len() < b.1.len()
+}
 
 pub(super) fn identify_class(this: &RangeSet<Char>) -> Option<String> {
     if this.get_cardinality() == 1 {
@@ -110,10 +157,48 @@ fn is_perl_word(range: &[(char, char)]) -> bool {
 
 #[inline]
 fn is_perl_space(range: &[(char, char)]) -> bool {
-    perl_space::WHITE_SPACE == range
+    property_bool::WHITE_SPACE == range
 }
 
 #[inline]
 fn is_perl_decimal(range: &[(char, char)]) -> bool {
-    perl_decimal::DECIMAL_NUMBER == range
+    general_category::DECIMAL_NUMBER == range
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The collection is sorted at compile time, so nothing would catch a
+    /// broken ordering at runtime other than lookups silently missing.
+    #[test]
+    fn classes_collection_is_sorted_for_binary_search() {
+        for pair in CLASSES_COLLECTION.windows(2) {
+            let (a, b) = (pair[0], pair[1]);
+            assert!(
+                (a.0, a.1) <= (b.0, b.1),
+                "{} and {} are out of order",
+                a.2,
+                b.2
+            );
+        }
+    }
+
+    #[test]
+    fn every_class_is_findable() {
+        for (name, value) in general_category::BY_NAME
+            .iter()
+            .chain(property_bool::BY_NAME)
+            .chain(script::BY_NAME)
+        {
+            let found = find_class(value)
+                .unwrap_or_else(|| panic!("{name} is missing from the collection"));
+            let found_value = CLASSES_COLLECTION
+                .iter()
+                .find(|(_, _, class)| class == &found)
+                .unwrap()
+                .1;
+            assert_eq!(*value, found_value, "{name} resolved to {found}");
+        }
+    }
 }
