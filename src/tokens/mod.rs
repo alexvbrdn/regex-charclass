@@ -1,3 +1,9 @@
+//! Recognising a set of `char` as a named regular expression class.
+//!
+//! A set that is exactly a Unicode general category, script or boolean property, or one
+//! of the Perl classes, is written as that name rather than as a list of ranges. The
+//! tables come from `ucd-generate`; see [`unicode`].
+
 use irange::RangeSet;
 use unicode::{general_category, perl_word, property_bool, script};
 

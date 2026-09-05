@@ -2,24 +2,45 @@
 name = "regex-charclass"
 version = "1.1.0"
 edition = "2021"
+rust-version = "1.63"
 authors = ["Alexandre van Beurden"]
-repository = "https://github.com/alexvbrdn/regex-charclass"
-license = "MIT"
-keywords = ["regex", "intersection", "union", "difference", "complement"]
 description = "Manipulate and convert regex character classes."
+repository = "https://github.com/alexvbrdn/regex-charclass"
+homepage = "https://github.com/alexvbrdn/regex-charclass"
+documentation = "https://docs.rs/regex-charclass"
+license = "MIT"
 readme = "README.md"
+keywords = ["regex", "unicode", "character-class", "set", "intersection"]
+categories = ["text-processing", "data-structures"]
+include = [
+    "/src/**/*.rs",
+    "/benches/**/*.rs",
+    "/tests/**/*.rs",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+]
 
 [dependencies]
-irange = "1.1.2"
+irange = "1.2"
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
+rand = "0.10"
+regex = "1.11"
 serde_json = "1.0"
 
 [features]
 serde = ["irange/serde", "dep:serde"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.bench]
+codegen-units = 1
+
 [[bench]]
-name = "my_benchmark"
+name = "char_class"
 harness = false

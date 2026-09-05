@@ -8,18 +8,98 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
 
 jobs:
-  build:
-
+  test:
+    name: Test
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Test & Lint
-      run: |
-        cargo test
-        cargo test  --features serde
-        cargo clippy
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # The crate has no default features, so this is the `serde`-less build.
+      - name: Test without features
+        run: cargo test --all-targets
+
+      - name: Test with all features
+        run: cargo test --all-features --all-targets
+
+      # `--all-targets` skips doctests, and the crate documentation is full of them.
+      - name: Doctests
+        run: cargo test --all-features --doc
+
+  lint:
+    name: Format and Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Clippy
+        run: cargo clippy --all-features --all-targets -- -D warnings
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+
+      # Nightly with `--cfg docsrs`, to match how docs.rs builds the crate.
+      - name: Build documentation
+        run: cargo doc --all-features --no-deps
+        env:
+          RUSTDOCFLAGS: --cfg docsrs -D warnings
+
+  msrv:
+    name: Minimum supported Rust version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The MSRV is read from `rust-version` in Cargo.toml so the two cannot drift, and
+      # passed as an input rather than as the ref of the action: a numeric ref like
+      # `dtolnay/rust-toolchain@1.63` looks like an action version to Dependabot, which
+      # then bumps it to a Rust release that does not exist.
+      - name: Read the MSRV from Cargo.toml
+        id: msrv
+        run: echo "version=$(sed -n 's/^rust-version = "\(.*\)"/\1/p' Cargo.toml)" >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+      - uses: Swatinem/rust-cache@v2
+
+      # The dev-dependencies need a far newer compiler than the crate itself, and Cargo
+      # resolves them even when nothing that uses them is being built, so they have to be
+      # gone before the lockfile is written. `cargo hack --no-dev-deps` cannot do this:
+      # it generates the lockfile before it edits the manifest.
+      - name: Drop the dev-dependencies
+        run: |
+          awk '/^\[/ { skip = ($0 == "[dev-dependencies]") } !skip' Cargo.toml > Cargo.toml.msrv
+          mv Cargo.toml.msrv Cargo.toml
+
+      # The `serde` feature is excluded because it pulls in `serde_derive`, whose own
+      # dependencies raise the requirement past 1.63. This is what the README documents.
+      - name: Check against the declared MSRV
+        run: cargo check --no-default-features
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Dry-run publish
+        run: cargo publish --dry-run
