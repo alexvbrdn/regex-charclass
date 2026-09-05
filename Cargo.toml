@@ -1,6 +1,6 @@
 [package]
 name = "regex-charclass"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
 rust-version = "1.63"
 authors = ["Alexandre van Beurden"]
@@ -33,6 +33,8 @@ serde_json = "1.0"
 
 [features]
 serde = ["irange/serde", "dep:serde"]
+ucd-16 = []
+ucd-17 = []
 
 [package.metadata.docs.rs]
 all-features = true

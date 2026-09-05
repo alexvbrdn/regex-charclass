@@ -61,8 +61,9 @@
 //!   dot-matches-newline (`(?s)`).
 //! - `\p{Name}` and the Perl classes stand for Unicode sets, so the pattern needs
 //!   Unicode mode, which is the default in most engines. The tables here are generated
-//!   from UCD 17.0.0, so an engine built against an older version may resolve a name to
-//!   a slightly different set.
+//!   from the Unicode character database a `ucd-*` feature selects, [`UCD_VERSION`], so
+//!   an engine built against another version may resolve a name to a slightly different
+//!   set.
 //!
 //! # The surrogate block
 //!
@@ -73,8 +74,31 @@
 //!
 //! # Feature flags
 //!
+//! The crate has no default features.
+//!
 //! - `serde`: implement `Serialize` and `Deserialize` for [`Char`], and
 //!   enable the same feature on `irange` so that a `RangeSet<Char>` round-trips.
+//! - `ucd-17`, `ucd-16`: the version of the Unicode character database the named
+//!   classes are generated from, which decides both the set of names
+//!   [`to_regex`](CharacterClass::to_regex) can return and the `char` each of them
+//!   covers. Pick the one matching the engine that will read the output; the version in
+//!   use is [`UCD_VERSION`].
+//!
+//! A build that names none of them gets the newest version. Only the selected version
+//! is compiled into the crate, so an unused one costs neither build time nor binary
+//! size.
+//!
+//! Naming a version is what pins it: since none of them is a default feature,
+//! `features = ["ucd-16"]` selects Unicode 16 rather than being unified with a default
+//! that outranks it, and it stays on 16 when a later release adds a newer version. A
+//! build that names none floats to the newest version each release.
+//!
+//! Cargo features are additive, though, so this only pins the version for a binary. If
+//! one dependent asks for `ucd-16` while another asks for `ucd-17`, both features are
+//! enabled and the *highest* wins for the whole build. That keeps the outcome
+//! deterministic, but it does mean a library cannot pin the UCD version its dependents
+//! get. Where the exact version matters, assert on [`UCD_VERSION`] rather than assuming
+//! the feature you named is the one in force.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -97,6 +121,20 @@ use tokens::identify_character;
 
 pub use crate::char::Char;
 pub use irange;
+
+/// The version of the Unicode character database the named classes come from, as it is
+/// written in the UCD itself, for instance `"17.0.0"`.
+///
+/// This is the version of the tables compiled into the crate, selected by the `ucd-*`
+/// feature flags described in [the crate documentation](crate#feature-flags). It is not
+/// necessarily the version the engine reading a `\p{Name}` class resolves it against.
+///
+/// # Example
+///
+/// ```
+/// assert_eq!(3, regex_charclass::UCD_VERSION.split('.').count());
+/// ```
+pub const UCD_VERSION: &str = tokens::UCD_VERSION;
 /// The set type this crate operates on, and the range type its constructors take, are
 /// `irange`'s. They are re-exported here so that a dependent needs neither its own
 /// dependency on `irange` nor a version kept in step with this crate's.

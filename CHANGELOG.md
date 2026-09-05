@@ -4,6 +4,28 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-05
+
+### Added
+
+- The version of the Unicode character database the named classes come from is now selected by a feature flag, `ucd-17` or `ucd-16`. It decides both the set of names `to_regex` can return and the `char` each of them covers, so a dependent generating classes for an engine that carries Unicode 16 can now match it:
+
+  ```toml
+  regex-charclass = { version = "1.2", features = ["ucd-16"] }
+  ```
+
+  Neither is a default feature, so naming one selects it rather than being unified with a default that outranks it, and a build that names none gets the newest version. Only the selected version is compiled in, so an unused one costs neither build time nor binary size. Cargo features are additive, so if two dependents ask for different versions both features end up enabled; the highest version then wins for the whole build, which makes the result independent of the order they were enabled in. Adding a version is a run of `generate-classes.sh`, a feature and a block in `src/tokens/unicode/mod.rs`.
+- `regex_charclass::UCD_VERSION`, the version of the tables compiled into the crate, for instance `"17.0.0"`. Since feature unification can override the feature a crate named, code that depends on the exact version should assert on this rather than on its own feature flag.
+
+### Changed
+
+- The generated tables moved from `src/tokens/unicode/` to `src/tokens/unicode/v16/` and `v17/`, one directory per UCD version. `generate-classes.sh` takes the version as its first argument, `./generate-classes.sh 17.0.0`, derives the directory from it and writes that directory's `mod.rs` as well as the tables. The contents of the UCD 17.0.0 tables are unchanged.
+- CI runs the test suite once per `ucd-*` feature, and once with `--all-features` for the case where both are enabled at once.
+
+### Compatibility
+
+- Nothing changes for an existing dependency. The crate still has no default features, and a build that names no `ucd-*` feature, with or without `default-features = false`, gets UCD 17.0.0 as before. Only naming `ucd-16` changes what `to_regex` returns.
+
 ## [1.1.0] - 2026-09-05
 
 This release moves to UCD 17.0.0, fixes four bugs that made a set hold the wrong `char` values or panic, and makes the named-class lookup free at runtime. No API is removed and no code that compiled against 1.0.3 stops compiling, but results change where they used to be incorrect. See *Compatibility* below before upgrading.
@@ -72,6 +94,7 @@ This release moves to UCD 17.0.0, fixes four bugs that made a set hold the wrong
 
 Initial release.
 
+[1.2.0]: https://github.com/alexvbrdn/regex-charclass/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/alexvbrdn/regex-charclass/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/alexvbrdn/regex-charclass/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/alexvbrdn/regex-charclass/compare/v1.0.1...v1.0.2

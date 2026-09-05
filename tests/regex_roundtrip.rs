@@ -5,9 +5,9 @@
 //! values around each of its bounds, where an off-by-one or a missing escape shows up.
 //!
 //! Two forms are only checked for compiling, not for membership: `\p{Name}` and the
-//! Perl classes name Unicode sets, and this crate's tables come from UCD 17.0.0 while
-//! the `regex` crate carries its own, possibly older, copy. Random sets essentially
-//! never hit them, so this costs almost no coverage.
+//! Perl classes name Unicode sets, and this crate's tables come from the UCD version a
+//! `ucd-*` feature selects while the `regex` crate carries its own copy. Random sets
+//! essentially never hit them, so this costs almost no coverage.
 
 use rand::{RngExt, SeedableRng};
 use regex::Regex;

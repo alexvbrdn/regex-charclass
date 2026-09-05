@@ -12,23 +12,50 @@ env:
 
 jobs:
   test:
-    name: Test
+    # One run per version of the Unicode character database: the `ucd-*` features select
+    # which tables are compiled, so the others are never built by a single run.
+    name: Test (${{ matrix.ucd }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ucd: [ucd-16, ucd-17]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # The crate has no default features, so this is also the `serde`-less build.
+      - name: Test without serde
+        run: cargo test --features ${{ matrix.ucd }} --all-targets
+
+      - name: Test with serde
+        run: cargo test --features ${{ matrix.ucd }},serde --all-targets
+
+      # `--all-targets` skips doctests, and the crate documentation is full of them.
+      - name: Doctests
+        run: cargo test --features ${{ matrix.ucd }},serde --doc
+
+  test-feature-edges:
+    # The two ends of the `ucd-*` selection. `--all-features` enables every one of them
+    # at once, which is what Cargo's feature unification does to a dependent that asks
+    # for an older version than another, and the highest has to win; a plain build names
+    # none of them, since none is a default feature, and has to fall back to the newest.
+    name: Test the feature edge cases
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
-      # The crate has no default features, so this is the `serde`-less build.
-      - name: Test without features
-        run: cargo test --all-targets
-
       - name: Test with all features
         run: cargo test --all-features --all-targets
 
-      # `--all-targets` skips doctests, and the crate documentation is full of them.
-      - name: Doctests
+      - name: Doctests with all features
         run: cargo test --all-features --doc
+
+      - name: Test with no features at all
+        run: cargo test --all-targets
 
   lint:
     name: Format and Clippy

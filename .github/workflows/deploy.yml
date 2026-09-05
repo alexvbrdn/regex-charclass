@@ -33,6 +33,7 @@ jobs:
         run: |
           cargo test
           cargo test --all-features
+          cargo test --features ucd-16,serde
 
       - name: Check documentation
         run: cargo doc --all-features --no-deps
