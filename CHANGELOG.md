@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - Unreleased
+
+### Added
+
+- `Char::index` and `Char::from_index`: the index of a `char` among all `char` values, and its inverse. Indices skip the surrogate block, so they are contiguous from `0` to `Char::COUNT - 1`: `Char::new('\u{E000}').index()` is `0xD800`. `from_index` returns `None` from `Char::COUNT` on.
+
 ## [1.2.0] - 2026-09-05
 
 ### Added
@@ -94,6 +100,7 @@ This release moves to UCD 17.0.0, fixes four bugs that made a set hold the wrong
 
 Initial release.
 
+[1.3.0]: https://github.com/alexvbrdn/regex-charclass/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/alexvbrdn/regex-charclass/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/alexvbrdn/regex-charclass/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/alexvbrdn/regex-charclass/compare/v1.0.2...v1.0.3

@@ -152,15 +152,42 @@ impl Char {
 
     /// The index of this `char` among all the `char` values, i.e. the number of `char`
     /// values below it. It is at most [`Char::COUNT`]` - 1`.
+    ///
+    /// The index equals the codepoint below the surrogate block and is the codepoint
+    /// minus `0x800` above it, so the indices of all the `char` values are contiguous.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use regex_charclass::Char;
+    ///
+    /// assert_eq!(97, Char::new('a').index());
+    /// assert_eq!(0xD7FF, Char::new('\u{D7FF}').index());
+    /// assert_eq!(0xD800, Char::new('\u{E000}').index());
+    /// assert_eq!(Char::COUNT - 1, Char::new(char::MAX).index());
+    /// ```
     #[inline]
-    pub(crate) fn index(self) -> u32 {
+    pub fn index(self) -> u32 {
         to_index(self.to_u32())
     }
 
     /// The `char` at the given index, the inverse of [`Char::index`], or `None` if the
-    /// index is past the last `char`.
+    /// index is past the last `char`, i.e. if it is at least [`Char::COUNT`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use regex_charclass::Char;
+    ///
+    /// assert_eq!(Some(Char::new('\u{E000}')), Char::from_index(0xD800));
+    /// assert_eq!(Some(Char::new(char::MAX)), Char::from_index(Char::COUNT - 1));
+    /// assert_eq!(None, Char::from_index(Char::COUNT));
+    ///
+    /// let c = Char::new('\u{1F600}');
+    /// assert_eq!(Some(c), Char::from_index(c.index()));
+    /// ```
     #[inline]
-    pub(crate) fn from_index(index: u32) -> Option<Self> {
+    pub fn from_index(index: u32) -> Option<Self> {
         Self::from_u32(from_index(index))
     }
 }
