@@ -16,14 +16,14 @@ The set is an [`irange::RangeSet`](https://github.com/alexvbrdn/irange). `RangeS
 
 ```toml
 [dependencies]
-regex-charclass = "1.2"
+regex-charclass = "1.3"
 ```
 
 The optional `serde` feature implements `Serialize` and `Deserialize` for a set of `char`:
 
 ```toml
 [dependencies]
-regex-charclass = { version = "1.2", features = ["serde"] }
+regex-charclass = { version = "1.3", features = ["serde"] }
 ```
 
 ## Example
@@ -107,7 +107,7 @@ See the [API documentation](https://docs.rs/regex-charclass) for the full list, 
 
 ## The surrogate block
 
-`char` is not contiguous: the codepoints `U+D800..=U+DFFF` are surrogates and hold no `char`. `Char` counts by index rather than by codepoint and skips that block, so `'\u{D7FF}'` and `'\u{E000}'` are adjacent and the total set is one range of 1,112,064 values rather than two.
+`char` is not contiguous: the codepoints `U+D800..=U+DFFF` are surrogates and hold no `char`. `Char` counts by index rather than by codepoint and skips that block, so `'\u{D7FF}'` and `'\u{E000}'` are adjacent and the total set is one range of 1,112,064 values rather than two. `Char::index` and `Char::from_index` expose that index: `Char::new('\u{E000}').index()` is `0xD800`.
 
 ## Minimum supported Rust version
 
